@@ -3,121 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LED Control Panel</title>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            max-width: 400px;
-            margin: auto;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #333;
-        }
-        .status {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .car-container {
-            position: relative;
-            width: 100%;
-            height: 150px;
-            overflow: hidden;
-        }
-        .car {
-            width: 100px;
-            position: absolute;
-            bottom: 20px;
-            transition: transform 1s linear;
-        }
-        .moving {
-            animation: moveCar 2s linear infinite;
-        }
-        @keyframes moveCar {
-            0% { transform: translateX(-100px); }
-            100% { transform: translateX(100%); }
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        .logo {
-            width: 100px;
-        }
-    </style>
-</head>
-<body>
-    <img src="gandhinagar-logo.png" alt="Gandhinagar Logo" class="logo">
-    <div class="container">
-        <h1>LED Control Panel</h1>
-        <p class="status">LED Status: <span id="ledStatus">Loading...</span></p>
-        <div class="car-container">
-            <img id="carImage" class="car" src="car.png" alt="Car">
-        </div>
-        <button onclick="toggleLED()">Toggle LED</button>
-    </div>
-
-    <script>
-        // 🔹 Firebase Configuration
-        const firebaseConfig = {
-            databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-
-        // 🔹 Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const ledStatusRef = db.ref("LED_Status");
-
-        // 🔹 Fetch LED Status from Firebase
-        ledStatusRef.on("value", (snapshot) => {
-            const status = snapshot.val();
-            document.getElementById("ledStatus").innerText = status;
-            const car = document.getElementById("carImage");
-
-            if (status === "ON") {
-                car.classList.add("moving");
-            } else {
-                car.classList.remove("moving");
-            }
-        });
-
-        // 🔹 Toggle LED Status
-        function toggleLED() {
-            ledStatusRef.once("value").then((snapshot) => {
-                const currentStatus = snapshot.val();
-                const newStatus = currentStatus === "ON" ? "OFF" : "ON";
-                ledStatusRef.set(newStatus);
-            });
-        }
-    </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LED Control</title>
+    <title>Toggle Control</title>
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
@@ -136,22 +22,54 @@
         // Fetch LED Status from Firebase
         onValue(ledStatusRef, (snapshot) => {
             const status = snapshot.val();
-            document.getElementById("ledStatus").innerText = status;
+            const btn = document.getElementById("toggleBtn");
+            btn.innerText = status === "ON" ? "Turn OFF" : "Turn ON";
         });
 
         // Toggle LED Status
         window.toggleLED = function() {
-            onValue(ledStatusRef, (snapshot) => {
+            ledStatusRef.once("value").then((snapshot) => {
                 const currentStatus = snapshot.val();
                 const newStatus = currentStatus === "ON" ? "OFF" : "ON";
                 set(ledStatusRef, newStatus);
-            }, { onlyOnce: true });
+            });
         };
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Car Stop Signal</h1>
-    <p>Car Status: <span id="ledStatus">Loading...</span></p>
-    <button onclick="toggleLED()">Toggle Car</button>
+    <div class="container">
+        <h2>Toggle Control</h2>
+        <button id="toggleBtn" onclick="toggleLED()">Loading...</button>
+    </div>
 </body>
 </html>
