@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -17,7 +17,7 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const ledStatusRef = ref(db, "LED_Status");
+        const ledStatusRef = ref(db, "Car Status");
 
         // Fetch LED Status from Firebase
         onValue(ledStatusRef, (snapshot) => {
