@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Control</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
+</head>
+<body>
+    <h1>LED Control Panel</h1>
+    <p>LED Status: <span id="ledStatus">Loading...</span></p>
+    <button onclick="toggleLED()">Toggle LED</button>
+
+    <script>
+        // 🔹 Firebase Configuration
+        const firebaseConfig = {
+            databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // 🔹 Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const ledStatusRef = db.ref("LED_Status");
+
+        // 🔹 Fetch LED Status from Firebase
+        ledStatusRef.on("value", (snapshot) => {
+            const status = snapshot.val();
+            document.getElementById("ledStatus").innerText = status;
+        });
+
+        // 🔹 Toggle LED Status
+        function toggleLED() {
+            ledStatusRef.once("value").then((snapshot) => {
+                const currentStatus = snapshot.val();
+                const newStatus = currentStatus === "ON" ? "OFF" : "ON";
+                ledStatusRef.set(newStatus);
+            });
+        }
+    </script>
+</body>
+</html>
