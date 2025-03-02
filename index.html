@@ -1,75 +1,68 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toggle Control</title>
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const ledStatusRef = ref(db, "Car Status");
-
-        // Fetch LED Status from Firebase
-        onValue(ledStatusRef, (snapshot) => {
-            const status = snapshot.val();
-            const btn = document.getElementById("toggleBtn");
-            btn.innerText = status === "ON" ? "Turn OFF" : "Turn ON";
-        });
-
-        // Toggle LED Status
-        window.toggleLED = function() {
-            ledStatusRef.once("value").then((snapshot) => {
-                const currentStatus = snapshot.val();
-                const newStatus = currentStatus === "ON" ? "OFF" : "ON";
-                set(ledStatusRef, newStatus);
-            });
-        };
-    </script>
+    <title>LED Control Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            text-align: center;
             background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
         }
         .container {
-            text-align: center;
             background: white;
+            max-width: 400px;
+            margin: auto;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
-            border: none;
-            border-radius: 5px;
-            background: #007bff;
-            color: white;
-            cursor: pointer;
-            transition: 0.3s;
+        h1 {
+            color: #333;
         }
-        button:hover {
-            background: #0056b3;
+        .status {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .logo {
+            width: 100px;
+            margin-bottom: 10px;
+        }
+        .golf-cart {
+            width: 200px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
+    <img src="gandhinagar-logo.png" alt="Gandhinagar Logo" class="logo">
     <div class="container">
-        <h2>Toggle Control</h2>
-        <button id="toggleBtn" onclick="toggleLED()">Loading...</button>
+        <h1>LED Control Panel</h1>
+        <p class="status">LED Status: <span id="ledStatus">Loading...</span></p>
+        <img src="golf-cart.png" alt="Golf Cart" class="golf-cart">
     </div>
+
+    <script>
+        // 🔹 Firebase Configuration
+        const firebaseConfig = {
+            databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // 🔹 Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const ledStatusRef = db.ref("LED_Status");
+
+        // 🔹 Fetch LED Status from Firebase
+        ledStatusRef.on("value", (snapshot) => {
+            const status = snapshot.val();
+            document.getElementById("ledStatus").innerText = status;
+        });
+    </script>
 </body>
 </html>
