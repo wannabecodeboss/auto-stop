@@ -4,9 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autonomous Campus Shuttle</title>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script> <!-- Replace with your API key -->
+    <script type="module">
+        // 🔹 Import Firebase v9+ Modular Syntax
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, onValue, query, limitToLast, orderByKey } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+        // 🔹 Firebase Configuration
+        const firebaseConfig = {
+            databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // 🔹 Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 🔹 Fetch LED Status
+        const ledStatusRef = ref(db, "LED_Status");
+        onValue(ledStatusRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const status = snapshot.val();
+                console.log("LED Status:", status);
+                document.getElementById("ledStatus").innerText = status;
+            } else {
+                console.log("No LED status found");
+                document.getElementById("ledStatus").innerText = "No Data";
+            }
+        }, (error) => console.error("Firebase Error (LED Status):", error));
+
+        // 🔹 Fetch Latest Location
+        const locationRef = query(ref(db, "location/user1"), orderByKey(), limitToLast(1));
+        onValue(locationRef, (snapshot) => {
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    const data = child.val();
+                    console.log("Latest Location Data:", data);
+
+                    if (data.lat && data.lon) {
+                        const lat = parseFloat(data.lat);
+                        const lon = parseFloat(data.lon);
+                        document.getElementById("location").innerText = `Lat: ${lat}, Lon: ${lon}`;
+                        updateMap(lat, lon);
+                    } else {
+                        console.log("Lat/Lon not found in the latest node.");
+                        document.getElementById("location").innerText = "No GPS Data";
+                    }
+                });
+            } else {
+                console.log("No location data found.");
+                document.getElementById("location").innerText = "No Data";
+            }
+        }, (error) => console.error("Firebase Error (Location):", error));
+
+        // 🔹 Google Maps API Integration
+        let map, marker;
+        function updateMap(lat, lon) {
+            if (!map) {
+                map = new google.maps.Map(document.getElementById("map"), {
+                    center: { lat, lng: lon },
+                    zoom: 16,
+                });
+                marker = new google.maps.Marker({ position: { lat, lng: lon }, map });
+            } else {
+                map.setCenter({ lat, lng: lon });
+                marker.setPosition({ lat, lng: lon });
+            }
+        }
+
+        window.initMap = () => updateMap(28.559, 77.088); // Default location
+    </script>
+
+    <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap"></script>
 
     <style>
         body {
@@ -56,47 +123,5 @@
         <div id="map"></div>
         <img src="golf-cart.png" alt="Golf Cart" class="golf-cart">
     </div>
-
-    <script>
-        // 🔹 Firebase Configuration
-        const firebaseConfig = {
-            databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-
-        // 🔹 Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // 🔹 Fetch LED Status
-        const ledStatusRef = db.ref("LED_Status");
-        ledStatusRef.on("value", (snapshot) => {
-            const status = snapshot.val();
-            document.getElementById("ledStatus").innerText = status;
-        });
-
-        // 🔹 Initialize Google Map
-        let map;
-        function initMap(lat = 28.559, lon = 77.088) {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat, lng: lon },
-                zoom: 16,
-            });
-            new google.maps.Marker({ position: { lat, lng: lon }, map });
-        }
-
-        // 🔹 Fetch Latest Location
-        const locationRef = db.ref("location/user1");
-        locationRef.orderByKey().limitToLast(1).on("child_added", (snapshot) => {
-            const data = snapshot.val();
-            if (data && data.lat && data.lon) {
-                const lat = data.lat;
-                const lon = data.lon;
-                document.getElementById("location").innerText = `Lat: ${lat}, Lon: ${lon}`;
-                initMap(lat, lon); // Update map
-            }
-        });
-
-        window.onload = () => initMap(); // Initialize map with default location
-    </script>
 </body>
 </html>
