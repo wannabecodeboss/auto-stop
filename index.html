@@ -6,6 +6,8 @@
     <title>Autonomous Campus Shuttle</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script> <!-- Replace with your API key -->
+    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -37,6 +39,12 @@
             width: 200px;
             margin-top: 20px;
         }
+        #map {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -44,6 +52,8 @@
     <div class="container">
         <h1>Cart Control Panel</h1>
         <p class="status">Current Status: <span id="ledStatus">Loading...</span></p>
+        <p class="status">Latest Location: <span id="location">Fetching...</span></p>
+        <div id="map"></div>
         <img src="golf-cart.png" alt="Golf Cart" class="golf-cart">
     </div>
 
@@ -56,12 +66,55 @@
         // 🔹 Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const ledStatusRef = db.ref("LED_Status");
 
-        // 🔹 Fetch LED Status from Firebase
+        // 🔹 Fetch LED Status
+        const ledStatusRef = db.ref("LED_Status");
         ledStatusRef.on("value", (snapshot) => {
             const status = snapshot.val();
             document.getElementById("ledStatus").innerText = status;
+        });
+
+        // 🔹 Fetch Latest GPS Location
+        const locationRef = db.ref("location/user1");
+        let map, marker;
+
+        function initMap(lat, lon) {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: lat, lng: lon },
+                zoom: 15,
+            });
+            marker = new google.maps.Marker({
+                position: { lat: lat, lng: lon },
+                map: map,
+                title: "Latest Location",
+            });
+        }
+
+        locationRef.on("value", (snapshot) => {
+            let latestTime = 0;
+            let latestData = null;
+
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                if (data.tst && data.tst > latestTime) {
+                    latestTime = data.tst;
+                    latestData = data;
+                }
+            });
+
+            if (latestData) {
+                const lat = latestData.lat;
+                const lon = latestData.lon;
+                document.getElementById("location").innerText = `Lat: ${lat}, Lon: ${lon}`;
+
+                // Update map
+                if (!map) {
+                    initMap(lat, lon);
+                } else {
+                    marker.setPosition({ lat: lat, lng: lon });
+                    map.setCenter({ lat: lat, lng: lon });
+                }
+            }
         });
     </script>
 </body>
