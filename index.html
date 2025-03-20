@@ -10,57 +10,49 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script type="module">
-        // 🔹 Import Firebase v9+ Modular Syntax
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, onValue, query, limitToLast, orderByKey } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set, query, limitToLast, orderByKey } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-        // 🔹 Firebase Configuration
         const firebaseConfig = {
             databaseURL: "https://auto-hiteshi-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
-        // 🔹 Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 🔹 Fetch LED Status
         const ledStatusRef = ref(db, "LED_Status");
         onValue(ledStatusRef, (snapshot) => {
             if (snapshot.exists()) {
                 const status = snapshot.val();
-                console.log("LED Status:", status);
                 document.getElementById("ledStatus").innerText = status;
+                document.getElementById("ledToggle").checked = status === "ON";
             } else {
-                console.log("No LED status found");
                 document.getElementById("ledStatus").innerText = "No Data";
             }
-        }, (error) => console.error("Firebase Error (LED Status):", error));
+        });
 
-        // 🔹 Fetch Latest Location
+        document.getElementById("ledToggle").addEventListener("change", (event) => {
+            const newStatus = event.target.checked ? "ON" : "OFF";
+            set(ledStatusRef, newStatus);
+        });
+
         const locationRef = query(ref(db, "location/user1"), orderByKey(), limitToLast(1));
         onValue(locationRef, (snapshot) => {
             if (snapshot.exists()) {
                 snapshot.forEach((child) => {
                     const data = child.val();
-                    console.log("Latest Location Data:", data);
-
                     if (data.lat && data.lon) {
-                        const lat = parseFloat(data.lat);
-                        const lon = parseFloat(data.lon);
-                        document.getElementById("location").innerText = `Lat: ${lat}, Lon: ${lon}`;
-                        updateMap(lat, lon);
+                        document.getElementById("location").innerText = `Lat: ${data.lat}, Lon: ${data.lon}`;
+                        updateMap(parseFloat(data.lat), parseFloat(data.lon));
                     } else {
-                        console.log("Lat/Lon not found in the latest node.");
                         document.getElementById("location").innerText = "No GPS Data";
                     }
                 });
             } else {
-                console.log("No location data found.");
                 document.getElementById("location").innerText = "No Data";
             }
-        }, (error) => console.error("Firebase Error (Location):", error));
+        });
 
-        // 🔹 OpenStreetMap Integration (Replacing Google Maps)
         let map;
         function updateMap(lat, lon) {
             if (!map) {
@@ -69,17 +61,12 @@
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
             }
-            
-            // Remove old markers and add new one
             map.eachLayer(layer => {
                 if (layer instanceof L.Marker) {
                     map.removeLayer(layer);
                 }
             });
-
-            L.marker([lat, lon]).addTo(map)
-                .bindPopup("Live Location")
-                .openPopup();
+            L.marker([lat, lon]).addTo(map).bindPopup("Live Location").openPopup();
         }
     </script>
 
@@ -106,13 +93,47 @@
             font-size: 1.2em;
             font-weight: bold;
         }
-        .logo {
-            width: 100px;
-            margin-bottom: 10px;
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .golf-cart {
-            width: 200px;
-            margin-top: 20px;
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 25px;
+        }
+        .toggle input {
+            display: none;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 25px;
+            transition: 0.4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3.5px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
         }
         #map {
             width: 100%;
@@ -126,7 +147,13 @@
     <img src="gandhinagar-logo.png" alt="Gandhinagar Logo" class="logo">
     <div class="container">
         <h1>Cart Control Panel</h1>
-        <p class="status">Current Status: <span id="ledStatus">Loading...</span></p>
+        <div class="toggle-container">
+            <p class="status">Current Status: <span id="ledStatus">Loading...</span></p>
+            <label class="toggle">
+                <input type="checkbox" id="ledToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
         <p class="status">Latest Location: <span id="location">Fetching...</span></p>
         <div id="map"></div>
         <img src="golf-cart.png" alt="Golf Cart" class="golf-cart">
